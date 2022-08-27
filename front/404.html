@@ -1,0 +1,35 @@
+<head>
+    <title>Remote Command Line </title>
+    </head>
+    <style>
+    body{
+    background-color: black;
+    
+    color: rgb(0, 255, 0);
+    }
+    
+    span{
+    min-width: 50%; 
+    display: inline-block;
+    }
+    
+    * {
+        background: none;
+    border: none;
+    color: rgb(0, 255, 0);
+    outline: none;
+    font-family:monospace !important;
+    }
+    </style>
+   <br><label id="wel">404</label>
+   <br><br><br>
+   <div id="workspace">
+   <div id="curr_div"><label id="txt"> </label> <span contenteditable="false" id="curr"></span><br>
+   <label class="in" id="curr_res"></label>
+ </div>
+    </div>
+    <script>
+    document.getElementById("wel").innerHTML = `Welcome to Remoterm for ${location.hostname}!`
+    document.getElementById("curr").innerHTML = `${localStorage.getItem("user") || "guest"}@remoterm $ GET ${location.pathname}`
+    document.getElementById("curr_res").innerHTML = `remoterm: page not found: ${location.pathname}`
+    </script>
