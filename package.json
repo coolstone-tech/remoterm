@@ -1,0 +1,20 @@
+{
+  "name": "remoterm",
+  "version": "0.0.1",
+  "homepage": "https://rt.coolstone.dev/",
+  "repository": "https://github.com/coolstone-tech/remoterm",
+  "funding":"https://www.patreon.com/coolstone",
+  "description": "Remotely run bash commands!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.1"
+  },
+  "bin": {
+    "rt": "./cmd.js"
+  },
+  "keywords": ["bash","cli"]
+}
