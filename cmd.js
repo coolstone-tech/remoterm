@@ -25,6 +25,11 @@ console.log(`Changed port to ${config.port}`)
 break
 }
 break
+case "logs":
+config.logs = !config?.logs || false
+overwrite()
+console.log(`Logging is now ${config.logs ? "enabled" : "disabled"}`)
+break
 case "start":
 require(".")
 break
@@ -40,7 +45,7 @@ case "add":
     })
 })
 break
-case "pass":
+case "pass" || "password" || "setpass" || "setpassword":
     const chRL = createInterface({input: process.stdin, output:process.stdout})
     chRL.question('New Password: ', pass => {
       appendFileSync(`${logdir}/${value}.log`,`\n Changed password at ${new Date().toUTCString()}`)
@@ -51,16 +56,12 @@ case "pass":
     })
 break
 case "remove":
-    const rmRL = createInterface({input: process.stdin, output:process.stdout})
         delete config.users[value]
         overwrite()
-      rmRL.close()
       console.log("Deleted user")
 break
 case "reset":
-    const rmlRL = createInterface({input: process.stdin, output:process.stdout})
       writeFileSync(`${homedir()}/rt/${value}.log`,'','utf8')
-      rmlRL.close()
       console.log("Reset log for " + value)
 break
 case "users":
@@ -80,10 +81,12 @@ rt reset <USERNAME> - Reset logs for a user
 rt set port <PORT_HERE> - Change port
 rt start - Start terminal
 rt users - List all usernames
+rt logs - Toggle logging
+
 Any command not listed above will return this message
 
 User Logs
-Anytime a user runs a command, Remoterm will log it in the Remoterm directory (~/rt).
+Anytime a user runs a command, Remoterm will log it in the Remoterm directory (~/rt). To view the logs, run "cat ~/rt/<USERNAME>.log"
 `)
 break
 }

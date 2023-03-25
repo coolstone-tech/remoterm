@@ -1,0 +1,32 @@
+    body {
+    background-color: black;
+    }
+
+    .green{
+        color: rgb(0, 255, 0);  
+    }
+    
+    span {
+    min-width: 50%; 
+    display: inline-block;
+    }
+    
+    * {
+    background: none;
+    border: none;
+    outline: none;
+    font-family:monospace !important;
+    cursor: text;
+    margin-left: 5px !important;
+    color:rgb(0, 255, 0);
+    text-decoration: none;
+    }
+
+    a, button{
+    cursor: pointer;
+    }
+
+    .in {
+    margin-left: 10px;
+    color:gray;
+    }

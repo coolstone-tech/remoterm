@@ -1,0 +1,74 @@
+<head>
+<link rel="stylesheet" href="/style">
+</head>
+<style>
+*{
+text-align: center;
+}
+</style>
+<body>
+    <form method="post" enctype="multipart/form-data" style="display: none;" id="upload"><input id="f" name="file" multiple onchange="change()" type="file"></form>
+    <div id="controls"> <button onclick="history.back()">Back</button> <button onclick="upload()">+</button></div>
+    <h2>%dir%</h2>
+    <div id="content"></div>
+    <p id="l" style="font-size: x-small;">%Len% files</p>
+</body>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+
+const getCurrentDir = () => {
+    return urlParams.get('path') || urlParams.get("dir") || "~";
+}
+
+document.getElementById('upload').action = `/upload?dir=${getCurrentDir()}`
+
+const upload = () => {
+    document.getElementById('f').value = null
+    document.getElementById('f').click()
+}
+
+const change = () => {
+console.log('uploading')
+document.getElementById('upload').submit()
+}
+
+const del = () => {
+    if(!confirm(`Are you sure you want to delete ${getCurrentDir()}?`)) return
+    fetch(`/delete?file=${getCurrentDir()}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.error) return alert(data.error);
+        window.location.href = '/files'
+    });
+}
+
+document.title = getCurrentDir()
+if(getCurrentDir() === "~"){
+    document.getElementById('controls').innerHTML = '';
+}
+fetch('/filecontent?file=' + getCurrentDir())
+    .then(response => response.json())
+    .then(data => {
+    if(data.error) {document.getElementById('controls').style.display = 'none'; document.getElementById("count").style.display = 'none'; return document.getElementById('content').innerHTML = `<h2>${data.error}</h2> <button onclick="history.back()">Exit</button>`;}
+if(data.dir == true){
+fetch(`/json?dir=${getCurrentDir()}`)
+    .then(response => response.json())
+    .then(data => {
+      document.body.innerHTML = document.body.innerHTML.replace("%Len%", data.length).replace("%dir%", getCurrentDir() == '~' ? 'Home' : getCurrentDir())
+        let html = '';
+        for (let i = 0; i < data.length; i++) {
+           if(data[i].type == 'dir') html += `<a href="?dir=${getCurrentDir()}/${data[i].name}">${data[i].name}/</a><br>`;
+           if(data[i].type == 'file') html += `<a href="?dir=${getCurrentDir()}/${data[i].name}">${data[i].name}</a><br>`;
+        }
+        document.getElementById('content').innerHTML = html;
+    });
+}else{
+document.body.innerHTML = document.body.innerHTML.replace('%dir%', getCurrentDir()).replace("%Len%", 1)
+document.getElementById("controls").innerHTML = `<button onclick="history.back()">back</button> <button onclick="window.location.href = '/edit?file=${getCurrentDir()}'">edit</button> <button onclick="del()">delete</button>`;
+document.getElementById('content').innerHTML = `<pre style="width:100%">${data.content}</pre>`;
+document.getElementById("l").style.display = 'none'
+}
+});
+</script>

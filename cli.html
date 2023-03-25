@@ -1,0 +1,209 @@
+<head>
+  <title>Remote Command Line</title>
+  <link rel="stylesheet" href="/style">
+</head>
+<br>
+<label class="green" id="wel"></label>
+<br>
+<br>
+<label class="green" id="last"></label>
+<div id="workspace">
+  <div class="green" id="curr_div">
+    <label id="txt"></label>
+    <span class="green" contenteditable="true" id="curr"></span>
+    <br>
+    <label class="in" id="curr_res"></label>
+  </div>
+</div>
+<script>
+  if (!sessionStorage.getItem("dir")) sessionStorage.setItem("dir", '~')
+
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
+  const date = new Date()
+  const l = localStorage.getItem("last")
+  const lt = localStorage.getItem("lasttime")
+  document.getElementById("last").innerHTML = `Last login: ${l ? l: date.toDateString()} ${lt ? lt : date.toLocaleTimeString()}`
+  localStorage.setItem("last", date.toDateString())
+  localStorage.setItem("lasttime", date.toLocaleTimeString())
+  if (localStorage.getItem("bg")) document.body.style.backgroundColor = localStorage.getItem("bg")
+  let prepend = () => {
+    return `${getCookie('user')}@${location.hostname} ${sessionStorage.getItem("dir")} $ `
+  }
+  document.getElementById('curr').focus()
+  document.getElementById("wel").innerHTML = `Welcome to Remoterm for ${location.hostname}!`
+  document.getElementById("txt").innerHTML = prepend()
+  class Command {
+    constructor(response = "") {
+      if (document.getElementById('curr_div')) {
+        document.getElementById("curr").contentEditable = false
+        document.getElementById("curr").id = ''
+        document.getElementById("curr_div").id = ''
+        document.getElementById('txt').id = ''
+        document.getElementById("curr_res").innerHTML = response.split("\n").join("<br>")
+          document.getElementById("curr_res").id = ''
+        }
+        const newcurdiv = document.createElement("div")
+        newcurdiv.id = 'curr_div'
+        newcurdiv.className = 'green'
+        const new$ = document.createElement("label")
+        new$.id = 'txt'
+        new$.innerHTML = prepend()
+        const newTypein = document.createElement("span")
+        newTypein.contentEditable = true
+        newTypein.id = 'curr'
+        const newcurres = document.createElement("div")
+        newcurdiv.appendChild(new$)
+        newcurdiv.appendChild(newTypein)
+        newcurres.id = 'curr_res'
+        newcurres.className = 'in'
+        newcurdiv.appendChild(newcurres)
+        document.getElementById("workspace").appendChild(newcurdiv)
+        document.getElementById('curr').focus()
+      }
+    }
+    const helpmsg = `
+							<h3 style="color:gray; margin:0px;">Commands</h3> logout - Logout of Remoterm 
+							<br> clear - Clear console 
+								<br> cd - Change directory 
+									<br> bg - Set background color 
+										<br> reload - Reload terminal 
+											<br> history [clear/enable/disable/show] - Clear, show, or enable/disable history 
+												<br> help - This message
+                        <br> files - Go to file manager
+                        <br> opn [file] [dir] - Open file in file manager, omit dir to open in current dir
+                        <br> docs - Open documentation
+                        `
+    const rt_commands = {
+      logout: () => {
+        localStorage.clear();
+        location = '/'
+      },
+      clear: () => {
+        document.getElementById("workspace").innerHTML = '';
+        new Command("Cleared");
+        if (document.getElementById("curr")) document.getElementById('curr').focus()
+      },
+      files:() => {
+      location = '/files'
+      },
+      cd: (args) => {
+        const p = args[1]
+        if (args[1]) fetch("/checkdir", {
+          headers: {
+            dir: p
+          }
+        }).then(e => e.json().then(data => {
+          if (data.exists) {
+            if (p) sessionStorage.setItem("dir", p)
+            new Command(p ? '' : "Did not change dir")
+          } else {
+            new Command(`cd: no such file or directory: ${p}`)
+          }
+        }))
+      },
+      dir: () => {
+        new Command(sessionStorage.getItem("dir"))
+      },
+      bg: (args) => {
+        if (args[1]) document.body.style.backgroundColor = args[1];
+        localStorage.setItem("bg", args[1]);
+        new Command(`Set background color to ${args[1]}`)
+      },
+      reload: () => {
+        location.reload()
+      },
+      docs: (args) => {
+        new Command(helpmsg)
+      },
+      help: () => {
+        new Command(helpmsg)
+      },
+      history: (args) => {
+        if (args[1] == 'disable') {
+          localStorage.setItem("history_on", false);
+          localStorage.setItem("history", "");
+          new Command("Disabled history")
+        } else if (args[1] == "show") {
+          const r = localStorage.getItem("history").split(",").reverse().join(", ");
+          r.startsWith(",") ? new Command(r.replace(",", "")) : new Command(r)
+        } else if (args[1] == 'enable') {
+          localStorage.setItem("history_on", true);
+          new Command("Enabled history")
+        } else if (args[1] == 'clear') {
+          localStorage.setItem("history", "");;
+          new Command("Cleared history")
+        } else {
+          new Command("enable, disable, show, or clear only.")
+        }
+      },
+      opn(args){
+        if(!args) location = `/files?dir=${sessionStorage.getItem("dir")}`
+        if(args[1]) location = `/files?dir=${args[2] ? args[2] : sessionStorage.getItem("dir")}/${args[1]}`
+        else new Command("No file specified")
+      },
+      docs(args){
+        if(args[1] != '--replace') open("https://rt.coolstone.dev")
+        else location = "https://rt.coolstone.dev"
+        new Command("Opened documentation")
+      }
+    }
+    if (!localStorage.getItem("history")) localStorage.setItem("history", "")
+    let index = 0
+    const send = (stdin) => {
+      fetch('/run', {
+        headers: {
+          stdin,
+          dir: sessionStorage.getItem("dir")
+        }
+      }).then(m => {
+        m.json().then(d => {
+          console.log(d.error || d.stdout)
+          new Command(d.error || d.stdout)
+        })
+      })
+    }
+    document.onkeydown = (ev) => {
+      if (ev.key == 'Enter') {
+        ev.preventDefault()
+        index = 0
+        const inh = document.getElementById("curr").innerHTML
+        if (inh.trim().endsWith("--send")) {
+          return send(inh.replace("--send", ""))
+        }
+        if (localStorage.getItem("history_on") == 'true') {
+          let h = localStorage.getItem("history").toString()
+          h += `${inh},`
+          localStorage.setItem("history", h)
+        }
+        inh.split("&&").forEach(_cmd => {
+          const cmd = (_cmd.trim().includes(" ") ? _cmd.split(" ")[0] : _cmd)
+          console.log(_cmd, cmd)
+          if (!cmd || !cmd.length) return new Command(`Could not get command from ${_cmd}`)
+          if (rt_commands[cmd]) {
+            rt_commands[cmd](_cmd.split(" "))
+          } else {
+            send(cmd)
+          }
+        })
+      } else if (ev.keyCode == 38) {
+        const h = localStorage.getItem("history").split(",").reverse()
+        if (index < h.length) index++
+        document.getElementById('curr').innerHTML = h[index] == undefined ? " " : h[index]
+      } else if (ev.keyCode == 40) {
+        const h = localStorage.getItem("history").split(",").reverse()
+        if (index >= 0) index--
+        document.getElementById('curr').innerHTML = h[index] == undefined ? " " : h[index]
+      } else {
+        if (document.getElementById("curr")) document.getElementById('curr').focus()
+      }
+    }
+    if (document.getElementById("curr")) document.getElementById('curr').focus()
+    document.oncontextmenu = (e) => {
+      e.preventDefault()
+    }
+</script>

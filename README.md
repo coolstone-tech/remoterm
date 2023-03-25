@@ -1,5 +1,5 @@
 ## Remoterm
-#### Remotely run bash commands
+#### Remote terminal and file manager.
 
 ### Install
 ```bash
@@ -10,3 +10,6 @@ You can also install and run Remoterm in a project by installing it in your proj
 ### Command lists
 For a list of server commands, run `rt help`.
 For a list of client commands (commands you can run on the Remoterm UI), run `help`.
+
+### Documentation
+For documentation, visit our [docs](https://rt.coolstone.dev), or run `docs` on the client-side.
